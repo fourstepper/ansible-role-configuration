@@ -1,0 +1,58 @@
+---
+# tasks file for ansible-role-configuration
+- name: Make sure the GPG home directory exists
+  file:
+    path: "{{ gpg_home_dir }}"
+    state: directory
+
+- name: Copy the GPG agent configuration files from global folder
+  copy:
+    src: "../../../config_files/gnupg/gpg-agent.conf"
+    dest: "$HOME/.gnupg/gpg-agent.conf"
+  ignore_errors: true
+  register: global_config
+
+- name: Copy the GPG agent configuration files locally
+  copy:
+    src: "files/gnupg/gpg-agent.conf"
+    dest: "$HOME/.gnupg/gpg-agent.conf"
+  when: global_config.failed
+
+- name: Copy the zathura configuration files
+  copy:
+    src: "files/zathura"
+    dest: "$HOME/.config/"
+
+- name: Copy the /etc/environment
+  copy:
+    src: "files/environment"
+    dest: "/etc/environment"
+  become: true
+
+- name: Create required dir structure for the current desktop setting
+  file:
+    path: "$HOME/.config/environment.d"
+    state: directory
+    recurse: true
+  when: install_sway is defined and install_sway
+
+- name: Set XDG_CURRENT_DESKTOP to sway
+  lineinfile:
+    path: "$HOME/.config/environment.d/current_desktop.conf"
+    line: XDG_CURRENT_DESKTOP=sway
+    create: true
+  when: install_sway is defined and install_sway
+
+- name: Delete the current_desktop.conf
+  file:
+    path: "$HOME/.config/environment.d/current_desktop.conf"
+    state: absent
+  when: |
+    (install_sway is defined and not install_sway) or
+    (install_sway is not defined)
+
+- name: Turn off bell alert sounds in GNOME (if possible)
+  command:
+    cmd: 'dconf write /org/gnome/desktop/sound/event-sounds "false"'
+  changed_when: false
+  ignore_errors: true
