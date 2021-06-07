@@ -7,7 +7,7 @@
 
 - name: Copy the GPG agent configuration files from global folder
   copy:
-    src: "../../../config_files/gnupg/gpg-agent.conf"
+    src: "{{ playbook_dir }}/config_files/gnupg/gpg-agent.conf"
     dest: "$HOME/.gnupg/gpg-agent.conf"
   ignore_errors: true
   register: global_config
@@ -17,11 +17,6 @@
     src: "files/gnupg/gpg-agent.conf"
     dest: "$HOME/.gnupg/gpg-agent.conf"
   when: global_config.failed
-
-- name: Copy the zathura configuration files
-  copy:
-    src: "files/zathura"
-    dest: "$HOME/.config/"
 
 - name: Copy the /etc/environment
   copy:
